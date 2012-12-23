@@ -1,132 +1,46 @@
 var CPU = function() {
     function CPU() {
-        this._regs = new ArrayBuffer(8);
-        this._reg8 = new Uint8Array(this._regs);
-        this._reg16 = new Uint16Array(this._regs);
+        this._regA = new Uint8Array(1);
+        this._regX = new Uint8Array(1);
+        this._regY = new Uint8Array(1);
+        this._regP = new Uint8Array(1);
+        this._regS = new Uint8Array(1);
+        this._regPC = new Uint16Array(1);
+        this._regPCH = new Uint8Array(this._regPC.buffer, 1, 1);
+        this._regPCL = new Uint8Array(this._regPC.buffer, 0, 1);
         this.RAM = new Uint8Array(65535);
         this.timer = 0;
     }
+    CPU.prototype.OPCODE_ADC = function(value) {
+        var tmp = this._regA[0] + value + ((this._regP[0] & 1) !== 0 ? 1 : 0);
+        if ((this._regA[0] & 128) !== (tmp & 128)) {
+            this._regP[0] = this._regP[0] | 64;
+        } else {
+            this._regP[0] = this._regP[0] & ~64;
+        }
+        this._regA[0] = tmp;
+        if (this._regA[0] === 0) {
+            this._regP[0] = this._regP[0] | 2;
+        } else {
+            this._regP[0] = this._regP[0] & ~2;
+        }
+        if (this._regA[0] > 127) {
+            this._regP[0] = this._regP[0] | 128;
+        } else {
+            this._regP[0] = this._regP[0] & ~128;
+        }
+        if (this._regA[0] > 255) {
+            this._regP[0] = this._regP[0] | 1;
+        } else {
+            this._regP[0] = this._regP[0] & ~1;
+        }
+    };
     CPU.prototype.step = function() {
-        var opcode = this.RAM[this._reg16[3]++];
+        var opcode = this.RAM[this._regPC[0]++];
         switch (opcode) {
           case 105:
             {
-                {
-                    var val = this.RAM[this._reg16[3]++];
-                    if (val + this._reg8[0] > 255) {
-                        this._reg8[4] = this._reg8[4] | 1;
-                    } else {
-                        this._reg8[4] = this._reg8[4] & ~1;
-                    }
-                    this._reg8[0] += val;
-                    this.timer -= 2;
-                    break;
-                }
-            }
-
-          case 101:
-            {
-                {
-                    var val = this.RAM[this._reg16[3]++] | this._reg8[7] << 8;
-                    if (val + this._reg8[0] > 255) {
-                        this._reg8[4] = this._reg8[4] | 1;
-                    } else {
-                        this._reg8[4] = this._reg8[4] & ~1;
-                    }
-                    this._reg8[0] += val;
-                    this.timer -= 3;
-                    break;
-                }
-            }
-
-          case 117:
-            {
-                {
-                    var val = this.RAM[this._reg16[3]++] | this._reg8[7] << 8;
-                    if (val + this._reg8[1] > 255) {
-                        this._reg8[4] = this._reg8[4] | 1;
-                    } else {
-                        this._reg8[4] = this._reg8[4] & ~1;
-                    }
-                    this._reg8[1] += val;
-                    this.timer -= 4;
-                    break;
-                }
-            }
-
-          case 109:
-            {
-                {
-                    var val = this.RAM[this._reg16[3]++] | this.RAM[this._reg16[3]++] << 8;
-                    if (val + this._reg8[0] > 255) {
-                        this._reg8[4] = this._reg8[4] | 1;
-                    } else {
-                        this._reg8[4] = this._reg8[4] & ~1;
-                    }
-                    this._reg8[0] += val;
-                    this.timer -= 4;
-                    break;
-                }
-            }
-
-          case 125:
-            {
-                {
-                    var val = this.RAM[this._reg16[3]++] | this.RAM[this._reg16[3]++] << 8;
-                    if (val + this._reg8[1] > 255) {
-                        this._reg8[4] = this._reg8[4] | 1;
-                    } else {
-                        this._reg8[4] = this._reg8[4] & ~1;
-                    }
-                    this._reg8[1] += val;
-                    this.timer -= 4;
-                    break;
-                }
-            }
-
-          case 121:
-            {
-                {
-                    var val = this.RAM[this._reg16[3]++] | this.RAM[this._reg16[3]++] << 8;
-                    if (val + this._reg8[2] > 255) {
-                        this._reg8[4] = this._reg8[4] | 1;
-                    } else {
-                        this._reg8[4] = this._reg8[4] & ~1;
-                    }
-                    this._reg8[2] += val;
-                    this.timer -= 4;
-                    break;
-                }
-            }
-
-          case 97:
-            {
-                {
-                    var val = 0;
-                    if (val + this._reg8[1] > 255) {
-                        this._reg8[4] = this._reg8[4] | 1;
-                    } else {
-                        this._reg8[4] = this._reg8[4] & ~1;
-                    }
-                    this._reg8[1] += val;
-                    this.timer -= 6;
-                    break;
-                }
-            }
-
-          case 113:
-            {
-                {
-                    var val = 0;
-                    if (val + this._reg8[2] > 255) {
-                        this._reg8[4] = this._reg8[4] | 1;
-                    } else {
-                        this._reg8[4] = this._reg8[4] & ~1;
-                    }
-                    this._reg8[2] += val;
-                    this.timer -= 5;
-                    break;
-                }
+                this.OPCODE_ADC(this.RAM[this._regPC[0]++]);
             }
         }
     };

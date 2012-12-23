@@ -1,12 +1,12 @@
-#define A _reg8[0]
-#define X _reg8[1]
-#define Y _reg8[2]
-#define P _reg8[4]
-#define S _reg8[5]
+#define A _regA[0]
+#define X _regX[0]
+#define Y _regY[0]
+#define P _regP[0]
+#define S _regS[0]
 
-#define PC _reg16[3]
-#define PCL _reg8[6]
-#define PCH _reg8[7]
+#define PC _regPC[0]
+#define PCL _regPCL[0]
+#define PCH _regPCH[0]
 
 #define FLAG_C 0x01
 #define FLAG_Z 0x02
@@ -20,13 +20,13 @@
 
 
 //Addressing modes
-#define MODE_A         MA
+/*#define MODE_A         MA
 #define MODE_X         MX
 #define MODE_Y         MY
 #define MODE_ABSOLUTE  ABSOLUTE
 #define MODE_IMMEDIATE IMMEDIATE
 #define MODE_INDIRECT  INDIRECT 
-#define MODE_ZERO_PAGE ZERO_PAGE
+#define MODE_ZERO_PAGE ZERO_PAGE*/
 
 #define READ_MA() \
     this.A
@@ -62,46 +62,82 @@
 #define DESTINATION(MODE) \
     DEST_##MODE
 
+#define GET_FLAG(F) \
+    ((this.P & FLAG_##F) !== 0 ? 1 : 0)
+
 #define SET_FLAG(F) \
     this.P = this.P | FLAG_##F;
 
 #define UNSET_FLAG(F) \
     this.P = this.P & (~FLAG_##F);    
 
-#define OPCODE_ADC(MODE_READ, MODE_WRITE)      \
-    var val = READ_VALUE(MODE_READ);           \
-    /* TODO: Put Page overflow into account */ \
-    if(val + DESTINATION(MODE_WRITE) > 255) {  \
-      SET_FLAG(C);                             \
-    }                                          \
-    else {                                     \
-      UNSET_FLAG(C);                           \
-    }                                          \
-    DESTINATION(MODE_WRITE) += val;
 
-
-#define OPCODE(NAME, CODE, MODE_READ, MODE_WRITE, TIME) \
-  case CODE: {                                          \
-    OPCODE_##NAME(MODE_READ, MODE_WRITE);               \
-    this.timer -= TIME;                                 \
-    break;                                              \
+#define OP_IR___(NAME,MODE,TIME,CODE)         \
+                                              \
+  case CODE:                                  \
+  {                                           \
+    this.OPCODE_##NAME( READ_##MODE() );      \
   }
-   
+
+ 
 
 class CPU {
   //Regsiter 
-  private _regs : ArrayBuffer; 
-  private _reg8 : Uint8Array;
-  private _reg16 : Uint16Array;
+  private _regA : Uint8Array; //Accumulator
+  private _regX : Uint8Array; //X
+  private _regY : Uint8Array; //Y
+  private _regP : Uint8Array; //Status 
+  private _regS : Uint8Array; //Stack
+  private _regPC : Uint16Array; //Program counter
+  private _regPCH : Uint8Array; //PC High
+  private _regPCL : Uint8Array; //PC Low
+
   private RAM : ArrayBuffer; 
-  private timer : number; //calc down till zero till next interrupt
+  private timer : number; //calc down till zero to trigger next interrupt
 
   constructor() {
-    this._regs  = new ArrayBuffer(8)
-    this._reg8  = new Uint8Array(this._regs); //10
-    this._reg16 = new Uint16Array(this._regs); //5
-    this.RAM    = new Uint8Array(0xFFFF); 
-    this.timer  = 0;
+    this._regA   = new Uint8Array(1); 
+    this._regX   = new Uint8Array(1); 
+    this._regY   = new Uint8Array(1); 
+    this._regP   = new Uint8Array(1); 
+    this._regS   = new Uint8Array(1); 
+    this._regPC  = new Uint16Array(1); 
+    this._regPCH = new Uint8Array(this._regPC.buffer, 1,1);
+    this._regPCL = new Uint8Array(this._regPC.buffer, 0,1);
+    this.RAM     = new Uint8Array(0xFFFF); 
+    this.timer   = 0;
+  }
+
+  private OPCODE_ADC( value ) {
+    var tmp = this.A + value + GET_FLAG(C); 
+    if( (this.A & 0x80) !== (tmp & 0x80) ) {			
+  	  SET_FLAG(V);
+    }
+    else {
+      UNSET_FLAG(V); 
+    } 
+
+    this.A = tmp; //Overflow will be cut of automatically 
+    if(this.A === 0) {
+  	  SET_FLAG(Z);
+    }
+    else {
+      UNSET_FLAG(Z); 
+    } 
+
+    if(this.A > 127) {
+  	  SET_FLAG(N);
+    }
+    else {
+      UNSET_FLAG(N); 
+    } 
+
+    if(this.A > 255) {
+  	  SET_FLAG(C);
+    }
+    else {
+      UNSET_FLAG(C); 
+    } 
   }
 
   public step() {
@@ -123,8 +159,14 @@ class CPU {
       Indirect,Y    ADC ($44),Y   $71  2   5+
 
       + add 1 cycle if page boundary crossed
-      */
-      //OP_
+      */  
+
+      // param 1 = instruction
+      // param 2 = addressing mode
+      // param 3 = cycles
+      // param 4 = opcode
+      
+		  OP_IR___( ADC, IMMEDIATE, 2, 0x69 )
       //OPCODE(ADC, 0x69, MODE_IMMEDIATE, MODE_A, 2); 
       //OPCODE(ADC, 0x65, MODE_ZERO_PAGE, MODE_A, 3); 
       //OPCODE(ADC, 0x75, MODE_ZERO_PAGE, MODE_X, 4); 
