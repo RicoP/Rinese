@@ -18,6 +18,11 @@ var CPU = function() {
         } else {
             this._regP[0] = this._regP[0] & ~64;
         }
+        if (tmp > 255) {
+            this._regP[0] = this._regP[0] | 1;
+        } else {
+            this._regP[0] = this._regP[0] & ~1;
+        }
         this._regA[0] = tmp;
         if (this._regA[0] === 0) {
             this._regP[0] = this._regP[0] | 2;
@@ -28,11 +33,6 @@ var CPU = function() {
             this._regP[0] = this._regP[0] | 128;
         } else {
             this._regP[0] = this._regP[0] & ~128;
-        }
-        if (this._regA[0] > 255) {
-            this._regP[0] = this._regP[0] | 1;
-        } else {
-            this._regP[0] = this._regP[0] & ~1;
         }
     };
     CPU.prototype.step = function() {

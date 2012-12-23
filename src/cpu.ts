@@ -71,6 +71,9 @@
 #define UNSET_FLAG(F) \
     this.P = this.P & (~FLAG_##F);    
 
+#define SET_FLAG_ON(F,cond) \
+  if((cond)) { SET_FLAG(F) } else { UNSET_FLAG(F) }
+
 
 #define OP_IR___(NAME,MODE,TIME,CODE)         \
                                               \
@@ -110,34 +113,12 @@ class CPU {
 
   private OPCODE_ADC( value ) {
     var tmp = this.A + value + GET_FLAG(C); 
-    if( (this.A & 0x80) !== (tmp & 0x80) ) {			
-  	  SET_FLAG(V);
-    }
-    else {
-      UNSET_FLAG(V); 
-    } 
+    SET_FLAG_ON(V, (this.A & 0x80) !== (tmp & 0x80));
+    SET_FLAG_ON(C, tmp > 255);
 
     this.A = tmp; //Overflow will be cut of automatically 
-    if(this.A === 0) {
-  	  SET_FLAG(Z);
-    }
-    else {
-      UNSET_FLAG(Z); 
-    } 
-
-    if(this.A > 127) {
-  	  SET_FLAG(N);
-    }
-    else {
-      UNSET_FLAG(N); 
-    } 
-
-    if(this.A > 255) {
-  	  SET_FLAG(C);
-    }
-    else {
-      UNSET_FLAG(C); 
-    } 
+    SET_FLAG_ON(Z, this.A === 0);
+    SET_FLAG_ON(N, this.A > 127);
   }
 
   public step() {
