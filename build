@@ -1,0 +1,6 @@
+#!/bin/sh
+ln -s /dev/stdin stdin.ts
+
+cpp -P src/cpu.ts | tsc stdin.ts --out /dev/stdout | uglifyjs -b > rinese.js
+
+rm stdin.ts
