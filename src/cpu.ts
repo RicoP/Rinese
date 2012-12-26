@@ -17,17 +17,6 @@
 #define FLAG_V 0x40
 #define FLAG_N 0x80
 
-
-
-//Addressing modes
-/*#define MODE_A         MA
-#define MODE_X         MX
-#define MODE_Y         MY
-#define MODE_ABSOLUTE  ABSOLUTE
-#define MODE_IMMEDIATE IMMEDIATE
-#define MODE_INDIRECT  INDIRECT 
-#define MODE_ZERO_PAGE ZERO_PAGE*/
-
 #define READ_MA() \
     this.A
 
@@ -44,7 +33,7 @@
     (READ_BYTE() | READ_BYTE() << 8)
 
 #define READ_ZERO_PAGE() \
-    (READ_BYTE() | this.PCH << 8)
+    (this.RAM[READ_BYTE()])
 
 #define READ_IMMEDIATE() \
     READ_BYTE()
@@ -76,13 +65,13 @@
 
 
 #define OP_IR___(NAME,MODE,TIME,CODE)         \
-                                              \
   case CODE:                                  \
-  {                                           \
     this.OPCODE_##NAME( READ_##MODE() );      \
-  }
+    break;                                    
 
- 
+#define OP( OPTIONS, NAME, MODE, TIME, CODE) \
+  OP_##OPTIONS(NAME, MODE, TIME, CODE)
+
 
 class CPU {
   //Regsiter 
@@ -147,7 +136,8 @@ class CPU {
       // param 3 = cycles
       // param 4 = opcode
       
-		  OP_IR___( ADC, IMMEDIATE, 2, 0x69 )
+		  OP( IR___, ADC, IMMEDIATE, 2, 0x69 )
+		  OP( IR___, ADC, ZERO_PAGE, 3, 0x65 )
       //OPCODE(ADC, 0x69, MODE_IMMEDIATE, MODE_A, 2); 
       //OPCODE(ADC, 0x65, MODE_ZERO_PAGE, MODE_A, 3); 
       //OPCODE(ADC, 0x75, MODE_ZERO_PAGE, MODE_X, 4); 

@@ -41,6 +41,13 @@ var CPU = function() {
           case 105:
             {
                 this.OPCODE_ADC(this.RAM[this._regPC[0]++]);
+                break;
+            }
+
+          case 101:
+            {
+                this.OPCODE_ADC(this.RAM[this.RAM[this._regPC[0]++]]);
+                break;
             }
         }
     };
