@@ -49,6 +49,12 @@ var CPU = function() {
                 this.OPCODE_ADC(this.RAM[this.RAM[this._regPC[0]++]]);
                 break;
             }
+
+          case 117:
+            {
+                this.OPCODE_ADC(this.RAM[this.RAM[this._regPC[0]++] + this._regX[0] & 255]);
+                break;
+            }
         }
     };
     return CPU;

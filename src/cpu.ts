@@ -17,13 +17,13 @@
 #define FLAG_V 0x40
 #define FLAG_N 0x80
 
-#define READ_MA() \
+#define READ_A() \
     this.A
 
-#define READ_MX() \
+#define READ_X() \
     this.X
 
-#define READ_MY() \
+#define READ_Y() \
     this.Y
 
 #define READ_BYTE() \
@@ -34,6 +34,10 @@
 
 #define READ_ZERO_PAGE() \
     (this.RAM[READ_BYTE()])
+
+/*TODO: extra clock when overflow? */
+#define READ_ZERO_PAGE_X() \
+   (this.RAM[ (READ_BYTE()+this.X) & 0xFF ]) 
 
 #define READ_IMMEDIATE() \
     READ_BYTE()
@@ -131,13 +135,15 @@ class CPU {
       + add 1 cycle if page boundary crossed
       */  
 
-      // param 1 = instruction
-      // param 2 = addressing mode
-      // param 3 = cycles
-      // param 4 = opcode
+      // param 1 = Options    
+      // param 2 = instruction
+      // param 3 = addressing mode
+      // param 4 = cycles
+      // param 5 = opcode
       
-		  OP( IR___, ADC, IMMEDIATE, 2, 0x69 )
-		  OP( IR___, ADC, ZERO_PAGE, 3, 0x65 )
+      OP( IR___, ADC, IMMEDIATE,   2, 0x69 )
+      OP( IR___, ADC, ZERO_PAGE,   3, 0x65 )
+      OP( IR___, ADC, ZERO_PAGE_X, 4, 0x75 )
       //OPCODE(ADC, 0x69, MODE_IMMEDIATE, MODE_A, 2); 
       //OPCODE(ADC, 0x65, MODE_ZERO_PAGE, MODE_A, 3); 
       //OPCODE(ADC, 0x75, MODE_ZERO_PAGE, MODE_X, 4); 
