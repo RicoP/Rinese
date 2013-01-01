@@ -17,54 +17,61 @@
 #define FLAG_V 0x40
 #define FLAG_N 0x80
 
-#define READ_A() \
-    this.A
+#define NONE
 
-#define READ_X() \
-    this.X
+//RAM manipulation 
+#define READ_RAM_BYTE(addr) \
+    this.RAM[addr]
 
-#define READ_Y() \
-    this.Y
+#define WRITE_RAM_BYTE(address, value) \
+    this.RAM[address] = value
 
+//Read data from Program counter
 #define READ_BYTE() \
-    (this.RAM[this.PC++])
+    (READ_RAM_BYTE(this.PC++))
 
 #define READ_WORD() \
     (READ_BYTE() | (READ_BYTE() << 8))
 
+//Read data from RAM 
 #define READ_ABSOLUTE() \
-    this.RAM[READ_WORD()]
+    READ_RAM_BYTE(READ_WORD())
 
 #define READ_ABSOLUTE_X() \
-    this.RAM[READ_WORD() + this.X]
+    READ_RAM_BYTE(READ_WORD() + this.X)
 
 #define READ_ABSOLUTE_Y() \
-    this.RAM[READ_WORD() + this.Y]
+    READ_RAM_BYTE(READ_WORD() + this.Y)
 
 #define READ_ZERO_PAGE() \
-    this.RAM[READ_BYTE()]
+    READ_RAM_BYTE(READ_BYTE())
 
 #define READ_ZERO_PAGE_X() \
-    this.RAM[ (READ_BYTE()+this.X) & 0xFF ]
+    READ_RAM_BYTE( (READ_BYTE()+this.X) & 0xFF )
 
 #define READ_ZERO_PAGE_Y() \
-    this.RAM[ (READ_BYTE()+this.Y) & 0xFF ]
+    READ_RAM_BYTE( (READ_BYTE()+this.Y) & 0xFF )
 
 #define READ_IMMEDIATE() \
     READ_BYTE()
 
 #define READ_INDIRECT() \
-    this.RAM[READ_WORD()]
+    READ_RAM_BYTE(READ_WORD())
 
 #define READ_INDIRECT_X() \
-    this.RAM[READ_ZERO_PAGE_X()]
+    READ_RAM_BYTE(READ_ZERO_PAGE_X())
 
 #define READ_INDIRECT_Y() \
-    this.RAM[READ_ZERO_PAGE_Y()]
+    READ_RAM_BYTE(READ_ZERO_PAGE_Y())
 
-#define READ_VALUE(MODE) \
-    READ_##MODE()
+//Read data from RAM and store address for later use
+#define READ_WRITE_ZERO_PAGE(address) \
+    READ_RAM_BYTE(address = READ_BYTE())
 
+#define WRITE_ZERO_PAGE(address, data) \
+    WRITE_RAM_BYTE(address, data)
+
+//Read flags
 #define GET_FLAG(F) \
     ((this.P & FLAG_##F) !== 0 ? 1 : 0)
 
@@ -77,9 +84,22 @@
 #define SET_FLAG_ON(F,cond) \
   if((cond)) { SET_FLAG(F) } else { UNSET_FLAG(F) }
 
-#define OP_IR___(NAME,MODE,TIME,CODE)         \
-  case CODE:                                  \
-    this.OPCODE_##NAME( READ_##MODE() );      \
+//Opcode modes
+#define OP_IR___(NAME,MODE,TIME,CODE)    \
+  case CODE:                             \
+    this.OPCODE_##NAME( READ_##MODE() ); \
+    break;
+
+#define OP_IRA__(NAME,NONE,TIME,CODE)      \
+  case CODE:                               \
+    this.A = this.OPCODE_##NAME( this.A ); \
+    break;
+
+#define OP_IRW__(NAME,MODE,TIME,CODE)              \
+  case CODE:                                       \
+    var address;                                  \
+    var data  = READ_WRITE_##MODE(address); \
+    WRITE_##MODE( address, this.OPCODE_##NAME(data) );   \
     break;
 
 #define OP(OPTIONS, NAME, MODE, TIME, CODE) \
@@ -126,6 +146,15 @@ class CPU {
     this.A &= value;
     SET_FLAG_ON(Z, this.A === 0);
     SET_FLAG_ON(N, this.A > 127);
+  }
+
+  private OPCODE_ASL( value ) {
+    var ret = value << 1;
+    SET_FLAG_ON(N, ret > 127); 
+    SET_FLAG_ON(Z, ret === 0); 
+    SET_FLAG_ON(N, ret > 255); 
+
+    return ret & 0xFF; //And not necessary? 
   }
 
   public step() {
@@ -188,6 +217,21 @@ class CPU {
       OP( IR___, AND, ABSOLUTE_Y,  4, 0x39 ) /* + */
       OP( IR___, AND, INDIRECT_X,  6, 0x21 ) 
       OP( IR___, AND, INDIRECT_Y,  5, 0x31 ) /* + */
+
+      /*
+      ASL (Arithmetic Shift Left)
+
+      Affects Flags: S Z C
+
+      MODE           SYNTAX       HEX LEN TIM
+      Accumulator   ASL A         $0A  1   2
+      Zero Page     ASL $44       $06  2   5
+      Zero Page,X   ASL $44,X     $16  2   6
+      Absolute      ASL $4400     $0E  3   6
+      Absolute,X    ASL $4400,X   $1E  3   7
+      */
+      OP( IRA__, ASL, NONE,        2, 0x0A )
+      OP( IRW__, ASL, ZERO_PAGE,   5, 0x06 )
     }
   }
 }

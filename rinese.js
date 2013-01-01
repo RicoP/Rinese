@@ -48,6 +48,25 @@ var CPU = function() {
             this._regP[0] = this._regP[0] & ~128;
         }
     };
+    CPU.prototype.OPCODE_ASL = function(value) {
+        var ret = value << 1;
+        if (ret > 127) {
+            this._regP[0] = this._regP[0] | 128;
+        } else {
+            this._regP[0] = this._regP[0] & ~128;
+        }
+        if (ret === 0) {
+            this._regP[0] = this._regP[0] | 2;
+        } else {
+            this._regP[0] = this._regP[0] & ~2;
+        }
+        if (ret > 255) {
+            this._regP[0] = this._regP[0] | 128;
+        } else {
+            this._regP[0] = this._regP[0] & ~128;
+        }
+        return ret & 255;
+    };
     CPU.prototype.step = function() {
         var opcode = this.RAM[this._regPC[0]++];
         switch (opcode) {
@@ -144,6 +163,20 @@ var CPU = function() {
           case 49:
             {
                 this.OPCODE_AND(this.RAM[this.RAM[this.RAM[this._regPC[0]++] + this._regY[0] & 255]]);
+                break;
+            }
+
+          case 10:
+            {
+                this._regA[0] = this.OPCODE_ASL(this._regA[0]);
+                break;
+            }
+
+          case 6:
+            {
+                var address;
+                var data = this.RAM[address = this.RAM[this._regPC[0]++]];
+                this.RAM[address] = this.OPCODE_ASL(data);
                 break;
             }
         }
