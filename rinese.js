@@ -55,6 +55,36 @@ var CPU = function() {
                 this.OPCODE_ADC(this.RAM[this.RAM[this._regPC[0]++] + this._regX[0] & 255]);
                 break;
             }
+
+          case 109:
+            {
+                this.OPCODE_ADC(this.RAM[this.RAM[this._regPC[0]++] | this.RAM[this._regPC[0]++] << 8]);
+                break;
+            }
+
+          case 125:
+            {
+                this.OPCODE_ADC(this.RAM[(this.RAM[this._regPC[0]++] | this.RAM[this._regPC[0]++] << 8) + this._regX[0]]);
+                break;
+            }
+
+          case 121:
+            {
+                this.OPCODE_ADC(this.RAM[(this.RAM[this._regPC[0]++] | this.RAM[this._regPC[0]++] << 8) + this._regY[0]]);
+                break;
+            }
+
+          case 97:
+            {
+                this.OPCODE_ADC(this.RAM[this.RAM[this.RAM[this._regPC[0]++] + this._regX[0] & 255]]);
+                break;
+            }
+
+          case 113:
+            {
+                this.OPCODE_ADC(this.RAM[this.RAM[this.RAM[this._regPC[0]++] + this._regY[0] & 255]]);
+                break;
+            }
         }
     };
     return CPU;

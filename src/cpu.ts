@@ -29,31 +29,41 @@
 #define READ_BYTE() \
     (this.RAM[this.PC++])
 
+#define READ_WORD() \
+    (READ_BYTE() | (READ_BYTE() << 8))
+
 #define READ_ABSOLUTE() \
-    (READ_BYTE() | READ_BYTE() << 8)
+    this.RAM[READ_WORD()]
+
+#define READ_ABSOLUTE_X() \
+    this.RAM[READ_WORD() + this.X]
+
+#define READ_ABSOLUTE_Y() \
+    this.RAM[READ_WORD() + this.Y]
 
 #define READ_ZERO_PAGE() \
-    (this.RAM[READ_BYTE()])
+    this.RAM[READ_BYTE()]
 
-/*TODO: extra clock when overflow? */
 #define READ_ZERO_PAGE_X() \
-   (this.RAM[ (READ_BYTE()+this.X) & 0xFF ]) 
+    this.RAM[ (READ_BYTE()+this.X) & 0xFF ]
+
+#define READ_ZERO_PAGE_Y() \
+    this.RAM[ (READ_BYTE()+this.Y) & 0xFF ]
 
 #define READ_IMMEDIATE() \
     READ_BYTE()
 
 #define READ_INDIRECT() \
-    0 /* dunno what to do! */
+    this.RAM[READ_WORD()]
+
+#define READ_INDIRECT_X() \
+    this.RAM[READ_ZERO_PAGE_X()]
+
+#define READ_INDIRECT_Y() \
+    this.RAM[READ_ZERO_PAGE_Y()]
 
 #define READ_VALUE(MODE) \
     READ_##MODE()
-
-#define DEST_MA this.A
-#define DEST_MX this.X
-#define DEST_MY this.Y
-
-#define DESTINATION(MODE) \
-    DEST_##MODE
 
 #define GET_FLAG(F) \
     ((this.P & FLAG_##F) !== 0 ? 1 : 0)
@@ -62,20 +72,18 @@
     this.P = this.P | FLAG_##F;
 
 #define UNSET_FLAG(F) \
-    this.P = this.P & (~FLAG_##F);    
+    this.P = this.P & (~FLAG_##F);
 
 #define SET_FLAG_ON(F,cond) \
   if((cond)) { SET_FLAG(F) } else { UNSET_FLAG(F) }
 
-
 #define OP_IR___(NAME,MODE,TIME,CODE)         \
   case CODE:                                  \
     this.OPCODE_##NAME( READ_##MODE() );      \
-    break;                                    
+    break;
 
 #define OP( OPTIONS, NAME, MODE, TIME, CODE) \
   OP_##OPTIONS(NAME, MODE, TIME, CODE)
-
 
 class CPU {
   //Regsiter 
@@ -117,6 +125,12 @@ class CPU {
   public step() {
     var opcode = READ_BYTE(); 
     switch(opcode) {
+      // param 1 = Options    
+      // param 2 = instruction
+      // param 3 = addressing mode
+      // param 4 = cycles
+      // param 5 = opcode
+      
       /*
       ADC (ADd with Carry)
 
@@ -134,25 +148,14 @@ class CPU {
 
       + add 1 cycle if page boundary crossed
       */  
-
-      // param 1 = Options    
-      // param 2 = instruction
-      // param 3 = addressing mode
-      // param 4 = cycles
-      // param 5 = opcode
-      
       OP( IR___, ADC, IMMEDIATE,   2, 0x69 )
       OP( IR___, ADC, ZERO_PAGE,   3, 0x65 )
       OP( IR___, ADC, ZERO_PAGE_X, 4, 0x75 )
-      //OPCODE(ADC, 0x69, MODE_IMMEDIATE, MODE_A, 2); 
-      //OPCODE(ADC, 0x65, MODE_ZERO_PAGE, MODE_A, 3); 
-      //OPCODE(ADC, 0x75, MODE_ZERO_PAGE, MODE_X, 4); 
-      //OPCODE(ADC, 0x6D, MODE_ABSOLUTE,  MODE_A, 4);
-      //OPCODE(ADC, 0x7D, MODE_ABSOLUTE,  MODE_X, 4); 
-      //OPCODE(ADC, 0x79, MODE_ABSOLUTE,  MODE_Y, 4); 
-      //OPCODE(ADC, 0x61, MODE_INDIRECT,  MODE_X, 6); 
-      //OPCODE(ADC, 0x71, MODE_INDIRECT,  MODE_Y, 5); 
-
+      OP( IR___, ADC, ABSOLUTE,    4, 0x6D )
+      OP( IR___, ADC, ABSOLUTE_X,  4, 0x7D ) /* + */
+      OP( IR___, ADC, ABSOLUTE_Y,  4, 0x79 ) /* + */
+      OP( IR___, ADC, INDIRECT_X,  6, 0x61 ) 
+      OP( IR___, ADC, INDIRECT_Y,  5, 0x71 ) /* + */
     }
   }
 }
