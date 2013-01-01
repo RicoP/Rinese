@@ -35,6 +35,19 @@ var CPU = function() {
             this._regP[0] = this._regP[0] & ~128;
         }
     };
+    CPU.prototype.OPCODE_AND = function(value) {
+        this._regA[0] &= value;
+        if (this._regA[0] === 0) {
+            this._regP[0] = this._regP[0] | 2;
+        } else {
+            this._regP[0] = this._regP[0] & ~2;
+        }
+        if (this._regA[0] > 127) {
+            this._regP[0] = this._regP[0] | 128;
+        } else {
+            this._regP[0] = this._regP[0] & ~128;
+        }
+    };
     CPU.prototype.step = function() {
         var opcode = this.RAM[this._regPC[0]++];
         switch (opcode) {
@@ -83,6 +96,54 @@ var CPU = function() {
           case 113:
             {
                 this.OPCODE_ADC(this.RAM[this.RAM[this.RAM[this._regPC[0]++] + this._regY[0] & 255]]);
+                break;
+            }
+
+          case 41:
+            {
+                this.OPCODE_AND(this.RAM[this._regPC[0]++]);
+                break;
+            }
+
+          case 37:
+            {
+                this.OPCODE_AND(this.RAM[this.RAM[this._regPC[0]++]]);
+                break;
+            }
+
+          case 53:
+            {
+                this.OPCODE_AND(this.RAM[this.RAM[this._regPC[0]++] + this._regX[0] & 255]);
+                break;
+            }
+
+          case 45:
+            {
+                this.OPCODE_AND(this.RAM[this.RAM[this._regPC[0]++] | this.RAM[this._regPC[0]++] << 8]);
+                break;
+            }
+
+          case 61:
+            {
+                this.OPCODE_AND(this.RAM[(this.RAM[this._regPC[0]++] | this.RAM[this._regPC[0]++] << 8) + this._regX[0]]);
+                break;
+            }
+
+          case 57:
+            {
+                this.OPCODE_AND(this.RAM[(this.RAM[this._regPC[0]++] | this.RAM[this._regPC[0]++] << 8) + this._regY[0]]);
+                break;
+            }
+
+          case 33:
+            {
+                this.OPCODE_AND(this.RAM[this.RAM[this.RAM[this._regPC[0]++] + this._regX[0] & 255]]);
+                break;
+            }
+
+          case 49:
+            {
+                this.OPCODE_AND(this.RAM[this.RAM[this.RAM[this._regPC[0]++] + this._regY[0] & 255]]);
                 break;
             }
         }

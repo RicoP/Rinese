@@ -82,7 +82,7 @@
     this.OPCODE_##NAME( READ_##MODE() );      \
     break;
 
-#define OP( OPTIONS, NAME, MODE, TIME, CODE) \
+#define OP(OPTIONS, NAME, MODE, TIME, CODE) \
   OP_##OPTIONS(NAME, MODE, TIME, CODE)
 
 class CPU {
@@ -122,6 +122,12 @@ class CPU {
     SET_FLAG_ON(N, this.A > 127);
   }
 
+  private OPCODE_AND( value ) {
+    this.A &= value;
+    SET_FLAG_ON(Z, this.A === 0);
+    SET_FLAG_ON(N, this.A > 127);
+  }
+
   public step() {
     var opcode = READ_BYTE(); 
     switch(opcode) {
@@ -156,6 +162,32 @@ class CPU {
       OP( IR___, ADC, ABSOLUTE_Y,  4, 0x79 ) /* + */
       OP( IR___, ADC, INDIRECT_X,  6, 0x61 ) 
       OP( IR___, ADC, INDIRECT_Y,  5, 0x71 ) /* + */
+
+      /*
+      AND (bitwise AND with accumulator)
+
+      Affects Flags: S Z
+
+      MODE           SYNTAX       HEX LEN TIM
+      Immediate     AND #$44      $29  2   2
+      Zero Page     AND $44       $25  2   3
+      Zero Page,X   AND $44,X     $35  2   4
+      Absolute      AND $4400     $2D  3   4
+      Absolute,X    AND $4400,X   $3D  3   4+
+      Absolute,Y    AND $4400,Y   $39  3   4+
+      Indirect,X    AND ($44,X)   $21  2   6
+      Indirect,Y    AND ($44),Y   $31  2   5+
+
+      + add 1 cycle if page boundary crossed
+      */
+      OP( IR___, AND, IMMEDIATE,   2, 0x29 )
+      OP( IR___, AND, ZERO_PAGE,   3, 0x25 )
+      OP( IR___, AND, ZERO_PAGE_X, 4, 0x35 )
+      OP( IR___, AND, ABSOLUTE,    4, 0x2D )
+      OP( IR___, AND, ABSOLUTE_X,  4, 0x3D ) /* + */
+      OP( IR___, AND, ABSOLUTE_Y,  4, 0x39 ) /* + */
+      OP( IR___, AND, INDIRECT_X,  6, 0x21 ) 
+      OP( IR___, AND, INDIRECT_Y,  5, 0x31 ) /* + */
     }
   }
 }
