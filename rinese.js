@@ -61,9 +61,9 @@ var CPU = function() {
             this._regP[0] = this._regP[0] & ~2;
         }
         if (ret > 255) {
-            this._regP[0] = this._regP[0] | 128;
+            this._regP[0] = this._regP[0] | 1;
         } else {
-            this._regP[0] = this._regP[0] & ~128;
+            this._regP[0] = this._regP[0] & ~1;
         }
         return ret & 255;
     };

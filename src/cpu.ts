@@ -8,14 +8,14 @@
 #define PCL _regPCL[0]
 #define PCH _regPCH[0]
 
-#define FLAG_C 0x01
-#define FLAG_Z 0x02
-#define FLAG_I 0x04
-#define FLAG_D 0x08
-#define FLAG_B 0x10
-#define FLAG_E 0x20
-#define FLAG_V 0x40
-#define FLAG_N 0x80
+#define FLAG_C 0x01 //Carry 
+#define FLAG_Z 0x02 //Zero 
+#define FLAG_I 0x04 //Interop
+#define FLAG_D 0x08 //Decimal (unused?) 
+#define FLAG_B 0x10 //wat? 
+#define FLAG_E 0x20 //Extra (unused) 
+#define FLAG_V 0x40 //Sign Change 
+#define FLAG_N 0x80 //Negative 
 
 #define NONE
 
@@ -152,7 +152,7 @@ class CPU {
     var ret = value << 1;
     SET_FLAG_ON(N, ret > 127); 
     SET_FLAG_ON(Z, ret === 0); 
-    SET_FLAG_ON(N, ret > 255); 
+    SET_FLAG_ON(C, ret > 255); 
 
     return ret & 0xFF; //And not necessary? 
   }
